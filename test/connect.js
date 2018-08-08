@@ -23,7 +23,8 @@ var STAN = require ('../lib/stan.js'),
     should = require('should'),
     timers = require('timers'),
     os = require('os'),
-    path = require('path');
+    path = require('path'),
+    proto = require('../lib/pb');
 
 describe('Basic Connectivity', function() {
 
@@ -325,5 +326,46 @@ describe('Basic Connectivity', function() {
       // restart the server for others
       startServer(done);
     });
+  });
+
+  it('close raises timeout error', function (done) {
+      this.timeout(10000);
+      var stan = STAN.connect(cluster, nuid.next(), {'url': 'nats://localhost:' + PORT, 'reconnectTimeWait': 1000});
+      stan.on('connect', function () {
+          ssc.stop_server(server);
+          setTimeout(function () {
+              stan.close();
+          }, 0);
+      });
+
+      stan.on('close', function(err) {
+        should.fail('close should have not fired');
+        done();
+      });
+      stan.on('error', function(err) {
+          (err.code).should.be.equal("REQ_TIMEOUT");
+          done();
+      });
+  });
+
+  it('close deserialization with error', function (done) {
+    var cr = new proto.CloseResponse();
+    cr.setError("foo");
+    var bm = Buffer.from(cr.serializeBinary());
+    var bs = bm.toString("binary");
+    var bm2 = Buffer.from(bs, 'binary');
+    var out = proto.CloseResponse.deserializeBinary(bm2.toByteArray());
+    out.getError().should.be.equal("foo");
+    done();
+  });
+
+  it('close deserialization without error', function (done) {
+      var cr = new proto.CloseResponse();
+      var bm = Buffer.from(cr.serializeBinary());
+      var bs = bm.toString("binary");
+      var bm2 = Buffer.from(bs, 'binary');
+      var out = proto.CloseResponse.deserializeBinary(bm2.toByteArray());
+      out.getError().should.be.equal("");
+      done();
   });
 });

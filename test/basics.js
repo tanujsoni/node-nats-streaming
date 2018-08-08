@@ -823,11 +823,14 @@ describe('Basics', function () {
       function msgHandler(sub, key) {
         var k = key;
         return function(m) {
+          console.log(k, m.getData(), 'redelivered:', m.isRedelivered());
           counter[k]++;
           if(key === 'before') {
             // this message has to be manually ack'ed or the ack won't be sent
             m.ack();
-            sub.close();
+            stan.nc.flush(function() {
+                sub.close();
+            });
           }
         };
       }
@@ -847,14 +850,14 @@ describe('Basics', function () {
       // Fire one, flush, close, on close fire another, reconnect
       sub.on('closed', function () {
         counter.should.have.property('before', 1);
-        stan.publish(subject);
+        stan.publish(subject, 'b');
         setTimeout(function () {
           counter.should.have.property('before', 1);
           restart();
         }, 250);
       });
       sub.on('ready', function () {
-        stan.publish(subject);
+        stan.publish(subject, 'a');
       });
 
       function restart() {
@@ -865,7 +868,7 @@ describe('Basics', function () {
         setupHandlers(sub, "after");
 
         sub.on('ready', function() {
-          stan.publish(subject);
+          stan.publish(subject, 'c');
           setTimeout(function() {
             counter.should.have.property('after', 2);
             done();

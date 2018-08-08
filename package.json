@@ -30,7 +30,7 @@
   "main": "./index.js",
   "scripts": {
     "cover": "istanbul cover _mocha",
-    "coveralls": "npm run cover -- --report lcovonly && cat ./reports/coverage/lcov.info | coveralls",
+    "coveralls": "npm run test && npm run cover -- --report lcovonly && cat ./reports/coverage/lcov.info | coveralls",
     "depcheck": "dependency-check . lib/* lib/pb/*",
     "depcheck:unused": "dependency-check ./package.json --unused --no-dev lib/*.js",
     "gen": "protoc --js_out=import_style=commonjs,library=lib/pb/protocol_pb,binary:. lib/pb/protocol.proto",
