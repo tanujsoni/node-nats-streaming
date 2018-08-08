@@ -22,7 +22,7 @@ before_script:
 script:
   - if [[ "$TRAVIS_NODE_VERSION" == 6 ]]; then npm test; fi
   - if [[ "$TRAVIS_NODE_VERSION" == 8 ]]; then npm test; fi
-  - if [[ "$TRAVIS_NODE_VERSION" == 10 ]]; then npm run coveralls; fi
+  - if [[ "$TRAVIS_NODE_VERSION" == 10 ]]; then npm test; npm run coveralls; fi
 
 after_failure:
   - cat nats-streaming-server/logs/*.log
